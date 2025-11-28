@@ -4,6 +4,7 @@ services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: MyApp
@@ -12,10 +13,11 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
 
   management-system:
     image: maingoctu56/management-system:0.0.2
