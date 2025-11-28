@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 10
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: admin_users
+              columnName: role_id
+      changes:
+        - addColumn:
+            tableName: admin_users
+            columns:
+              - column:
+                  name: role_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: admin_users
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_admin_users_role

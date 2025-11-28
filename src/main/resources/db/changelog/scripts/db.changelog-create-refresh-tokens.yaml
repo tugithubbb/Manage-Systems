@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: refresh_tokens
+      validCheckSum: ANY
+      changes:
+        - createTable:
+            tableName: refresh_tokens
+            failOnError: false
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: admin_user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiry_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                    defaultValueBoolean: false
+        - addForeignKeyConstraint:
+            baseTableName: refresh_tokens
+            baseColumnNames: admin_user_id
+            referencedTableName: admin_users
+            referencedColumnNames: id
+            constraintName: fk_refresh_tokens_admin_users

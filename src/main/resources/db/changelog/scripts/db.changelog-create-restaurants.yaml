@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 12
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: restaurants
+      changes:
+        - createTable:
+            tableName: restaurants
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: code
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address
+                  type: varchar(255)
+              - column:
+                  name: admin_user_id
+                  type: varchar(36)
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: deleted_at
+                  type: timestamp
+
+        - addForeignKeyConstraint:
+            baseTableName: restaurants
+            baseColumnNames: admin_user_id
+            referencedTableName: admin_users
+            referencedColumnNames: id
+            constraintName: fk_restaurants_admin_users

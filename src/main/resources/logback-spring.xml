@@ -1,0 +1,47 @@
+<configuration>
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <logLevel/>
+                <threadName/>
+                <loggerName/>
+                <message/>
+                <stackTrace/>
+                <mdc/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ================================================= -->
+    <!--  Appender: JSON File                               -->
+    <!-- ================================================= -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>C:/Management-System/demo/logs/app.json</file> <!-- folder logs phải tồn tại trước khi chạy -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>C:/Management-System/demo/logs/app-%d{yyyy-MM-dd}.json</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <threadName/>
+                <loggerName/>
+                <message/>
+                <stackTrace/>
+                <mdc/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ================================================= -->
+    <!-- Root Logger                                       -->
+    <!-- ================================================= -->
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+        <appender-ref ref="JSON_FILE"/>
+    </root>
+</configuration>

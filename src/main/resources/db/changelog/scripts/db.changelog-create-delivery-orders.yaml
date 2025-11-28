@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-delivery-orders
+      author: hsa
+      changes:
+        - createTable:
+            tableName: delivery_orders
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: code
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: order_id
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+
+              - column: { name: created_at, type: TIMESTAMP }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: deleted_at, type: TIMESTAMP }
+
+        - addForeignKeyConstraint:
+            baseTableName: delivery_orders
+            baseColumnNames: order_id
+            referencedTableName: orders
+            referencedColumnNames: id
+            constraintName: fk_delivery_order_order

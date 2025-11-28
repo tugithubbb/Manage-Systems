@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-note-orders
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: orders
+            columnName: note
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: note
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true

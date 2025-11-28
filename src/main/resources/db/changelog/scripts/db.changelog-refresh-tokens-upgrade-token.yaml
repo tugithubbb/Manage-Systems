@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: dssd
+      changes:
+        - modifyDataType:
+            tableName: refresh_tokens
+            columnName: token
+            newDataType: TEXT

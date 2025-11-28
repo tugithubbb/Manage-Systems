@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: admin_users
+      changes:
+        - insert:
+            tableName: admin_users
+            failOnError: false
+            columns:
+              - column:
+                  name: id
+                  valueComputed: "UUID()"
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: fullname
+                  value: "Administrator"
+              - column:
+                  name: email
+                  value: admin@example.com
+              - column:
+                  name: password
+                  value: admin123
+              - column:
+                  name: phone
+                  value: "0901234567"
+              - column:
+                  name: address
+                  value: "Tokyo, Japan"
+              - column:
+                  name: created_at
+                  valueDate: "2025-11-13T12:00:00"
+              - column:
+                  name: updated_at
+                  valueDate: "2025-11-13T12:00:00"
+              - column:
+                  name: deleted_at
+                  value: null

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 18
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: ingredients
+            columnName: unit_price
+      changes:
+        - addColumn:
+            tableName: ingredients
+            columns:
+              - column:
+                  name: unit_price
+                  type: DECIMAL(12,2)
+                  defaultValueNumeric: 0.00
+                  constraints:
+                    nullable: true

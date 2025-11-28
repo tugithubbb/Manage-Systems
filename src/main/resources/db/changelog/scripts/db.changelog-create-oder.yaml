@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders-table
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: orders
+
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: restaurant_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: restaurant_user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: "PENDING"
+
+              - column:
+                  name: total_price
+                  type: DECIMAL(12,2)
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP
+
+        - addForeignKeyConstraint:
+            constraintName: fk_orders_restaurant
+            baseTableName: orders
+            baseColumnNames: restaurant_id
+            referencedTableName: restaurants
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_orders_restaurant_user
+            baseTableName: orders
+            baseColumnNames: restaurant_user_id
+            referencedTableName: restaurant_users
+            referencedColumnNames: id

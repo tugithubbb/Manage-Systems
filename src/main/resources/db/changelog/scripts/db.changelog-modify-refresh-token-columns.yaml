@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: dssd
+      changes:
+        - dropNotNullConstraint:
+            tableName: refresh_tokens
+            columnName: admin_user_id
+            columnDataType: VARCHAR(36)
+        - dropNotNullConstraint:
+            tableName: refresh_tokens
+            columnName: restaurant_user_id
+            columnDataType: VARCHAR(36)

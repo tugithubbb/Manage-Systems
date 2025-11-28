@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 11
+      author: dssd
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: permission_role
+      validCheckSum: ANY
+      changes:
+        - createTable:
+            tableName: permission_role
+            columns:
+              - column:
+                  name: role_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: permission_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            columnNames: role_id,permission_id
+            tableName: permission_role
+            constraintName: pk_permission_role
+
+        - addForeignKeyConstraint:
+            baseTableName: permission_role
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_permission_role_role
+
+        - addForeignKeyConstraint:
+            baseTableName: permission_role
+            baseColumnNames: permission_id
+            referencedTableName: permissions
+            referencedColumnNames: id
+            constraintName: fk_permission_role_permission
