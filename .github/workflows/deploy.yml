@@ -1,39 +1,55 @@
-name: CI/CD Spring Boot Docker
+name: CI/CD Spring Boot → Docker Swarm
 
 on:
   push:
-    branches: [ main ]  # Chỉ chạy khi push lên main
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest   # 👈 GitHub-hosted runner
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # 1️⃣ Lấy source code
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
+      # 2️⃣ Setup Java
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '21'
-          distribution: 'temurin'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build project with Gradle
+      # 3️⃣ Build Spring Boot (KHÔNG chạy app)
+      - name: Build Spring Boot
         run: ./gradlew clean build -x test
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      # 4️⃣ Login Docker Hub
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 5️⃣ Build Docker image
       - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/management-system:0.0.2 .
+        run: docker build -t maingoctu56/management-system:latest .
 
+      # 6️⃣ Push image
       - name: Push Docker image
+        run: docker push maingoctu56/management-system:latest
+
+      # 7️⃣ Setup SSH (để ssh vào VPS)
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      # 8️⃣ Deploy lên VPS (chạy deploy.sh)
+      - name: Deploy to VPS (Docker Swarm)
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/management-system:0.0.2
+          chmod +x deploy.sh
+          ./deploy.sh

@@ -12,6 +12,8 @@ services:
       - "3307:3306"
     networks:
       - app-network
+    volumes:
+      - db-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
@@ -19,21 +21,9 @@ services:
       retries: 10
       start_period: 10s
 
-  management-system:
-    image: maingoctu56/management-system:0.0.2
-    container_name: management-system
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/MyApp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  db-data:
