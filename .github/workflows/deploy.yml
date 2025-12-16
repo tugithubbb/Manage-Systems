@@ -41,20 +41,55 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      # ⭐⭐⭐ THÊM STEP NÀY - QUAN TRỌNG NHẤT ⭐⭐⭐
-      - name: Add VPS to known_hosts
+      - name: Configure SSH known_hosts
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts 2>&1
-          echo "✅ Added $VPS_HOST to known_hosts"
+          chmod 644 ~/.ssh/known_hosts
+          echo "✅ SSH configured for $VPS_HOST"
 
-      # Deploy phải ở SAU step Add known_hosts
       - name: Deploy to VPS (Docker Swarm)
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
+          DOCKER_IMAGE: maingoctu56/management-system
+          SERVICE_NAME: management-system
+          NETWORK_NAME: app-network
+          REPLICAS: 2
+          ENV_FILE: /etc/app/management-system.env
         run: |
           chmod +x deploy.sh
           ./deploy.sh
+
+      - name: Verify Deployment
+        if: success()
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "🔍 Checking service status..."
+          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'VERIFY'
+            echo "📊 Service Status:"
+            docker service ls --filter name=management-system
+            echo ""
+            echo "📋 Service Tasks:"
+            docker service ps management-system --no-trunc --format "table {{.ID}}\t{{.Name}}\t{{.Node}}\t{{.DesiredState}}\t{{.CurrentState}}"
+            echo ""
+            echo "📝 Recent Logs:"
+            docker service logs management-system --tail 30 --timestamps
+          VERIFY
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: maingoctu56/management-system:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: management-system" >> $GITHUB_STEP_SUMMARY
+          echo "- **Replicas**: 2" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Application URL**: http://${{ secrets.VPS_HOST }}:8080" >> $GITHUB_STEP_SUMMARY
