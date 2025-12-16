@@ -3,6 +3,7 @@ name: CI/CD Spring Boot → Docker Swarm
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -76,10 +77,10 @@ jobs:
             docker service ls --filter name=management-system
             echo ""
             echo "📋 Service Tasks:"
-            docker service ps management-system --no-trunc --format "table {{.ID}}\t{{.Name}}\t{{.Node}}\t{{.DesiredState}}\t{{.CurrentState}}"
+            docker service ps management-system --no-trunc --format "table {{.ID}}\t{{.Name}}\t{{.Node}}\t{{.DesiredState}}\t{{.CurrentState}}" 2>&1 || echo "Service not ready yet"
             echo ""
             echo "📝 Recent Logs:"
-            docker service logs management-system --tail 30 --timestamps
+            docker service logs management-system --tail 30 --timestamps 2>&1 || echo "No logs available yet"
           VERIFY
 
       - name: Deployment Summary
@@ -92,4 +93,10 @@ jobs:
           echo "- **Replicas**: 2" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **Application URL**: http://${{ secrets.VPS_HOST }}:8080" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ **Deployment completed successfully!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Application URL**: http://${{ secrets.VPS_HOST }}:8080" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment failed. Check logs above.**" >> $GITHUB_STEP_SUMMARY
+          fi
