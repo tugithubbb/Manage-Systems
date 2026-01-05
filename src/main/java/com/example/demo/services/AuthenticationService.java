@@ -108,7 +108,7 @@ public class AuthenticationService {
         // new token
         AuthResponse access = generateAccessToken(adminUser);
         AuthResponse refresh = generateRefreshToken(adminUser);
-        // log RT khi lưu
+        // log
         log.info("Saving RT for user {}", adminUser.getId());
         log.info("RT value saving = {}", refresh.getToken());
 

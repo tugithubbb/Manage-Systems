@@ -34,72 +34,26 @@ public class LoggingAspect {
         HttpServletRequest request = ((ServletRequestAttributes)
                 RequestContextHolder.currentRequestAttributes()).getRequest();
 
-        // Generate trace ID
-        String traceId = UUID.randomUUID().toString();
-
         try {
-            // Set MDC for request
-            MDC.put("traceId", traceId);
-            MDC.put("httpMethod", request.getMethod());
-            MDC.put("uri", request.getRequestURI());
-            MDC.put("className", className);
-            MDC.put("methodName", methodName);
-            MDC.put("type", "API_REQUEST");
+            log.info("Business logic start");
 
-            // Capture request body
-            Object[] args = joinPoint.getArgs();
-            if (args != null && args.length > 0) {
-                for (Object arg : args) {
-                    if (arg != null && !isSpringType(arg)) {
-                        try {
-                            String requestBody = objectMapper.writeValueAsString(arg);
-                            MDC.put("requestBody", requestBody);
-                        } catch (Exception e) {
-                            MDC.put("requestBody", arg.toString());
-                        }
-                        break;
-                    }
-                }
-            }
-
-            log.info("API Request received");
-
-            // Execute method
             Object result = joinPoint.proceed();
 
-            // Log response
-            long duration = System.currentTimeMillis() - startTime;
-            MDC.put("duration", duration + "ms");
+            MDC.put("duration", (System.currentTimeMillis() - startTime) + "ms");
             MDC.put("status", "SUCCESS");
-            MDC.put("type", "API_RESPONSE");
 
-            log.info("API Request completed");
-
+            log.info("Business logic success");
             return result;
 
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-
-            MDC.put("duration", duration + "ms");
+            MDC.put("duration", (System.currentTimeMillis() - startTime) + "ms");
             MDC.put("status", "ERROR");
-            MDC.put("type", "API_ERROR");
-            MDC.put("errorMessage", e.getMessage());
             MDC.put("errorClass", e.getClass().getSimpleName());
+            MDC.put("errorMessage", e.getMessage());
 
-            log.error("API Request failed", e);
-
+            log.error("Business logic failed", e);
             throw e;
-
-        } finally {
-            // Clean up MDC
-            MDC.clear();
         }
-    }
-
-    private boolean isSpringType(Object arg) {
-        String className = arg.getClass().getName();
-        return className.startsWith("org.springframework") ||
-                className.startsWith("jakarta.servlet");
     }
 
 

@@ -35,13 +35,18 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
     private static final Set<String> PUBLIC_ENDPOINTS = Set.of(
             "/v1/admin/restaurant-user/me",
+            "/v1/admin/admin_user/list",
+            "/v1/admin/admin_user/me",
+            "/v1/admin/admin_user/update/{id}",
+            "/v1/admin/restaurant-user/update/{id}",
             "/v1/admin/restaurant-user/change-password",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/swagger-resources/**",
             "/webjars/**",
-            "/v3/api-docs.yaml"
+            "/v3/api-docs.yaml",
+            "/auth/test"
 
     );
     @Override

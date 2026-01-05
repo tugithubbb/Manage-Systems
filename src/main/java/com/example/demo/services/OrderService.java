@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.Entity.*;
+import com.example.demo.cache.RedisService;
 import com.example.demo.dto.request.CreateOrderRequest;
 import com.example.demo.dto.response.OrderResponse;
 import com.example.demo.mapper.OrderMapper;
@@ -14,9 +15,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +35,8 @@ public class OrderService {
     RestaurantUserRepository restaurantUserRepository;
     IngredientRepository ingredientRepository;
     OrderRepository orderRepository;
+    RedisTemplate redisTemplate;
+    RedisService redisService;
 
 
     @Transactional
@@ -158,5 +163,31 @@ public class OrderService {
                 ).collect(Collectors.toList()))
                 .build();
     }
+
+    public void orderBeef(String restaurant) {
+        System.out.println(
+                Thread.currentThread().getName() +
+                        " -> " + restaurant + " try to order beef"
+        );
+        String lockKey = "lock:beef";
+
+        Boolean locked = redisTemplate.opsForValue()
+                .setIfAbsent(lockKey, restaurant, Duration.ofSeconds(10));
+
+        if (Boolean.FALSE.equals(locked)) {
+            System.out.println(restaurant + " ❌ FAILED (beef hết)");
+            return;
+        }
+
+        try {
+            System.out.println(restaurant + " ✅ ORDER SUCCESS");
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            redisTemplate.delete(lockKey);
+        }
+    }
+
 
 }

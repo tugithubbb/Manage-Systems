@@ -3,7 +3,10 @@ package com.example.demo.services;
 import com.example.demo.Entity.AdminUser;
 //import com.example.demo.config.JwtAuthenticationFilter;
 import com.example.demo.Entity.Role;
+import com.example.demo.cache.CacheKey;
+import com.example.demo.cache.RedisService;
 import com.example.demo.dto.request.*;
+import com.example.demo.dto.response.MyInfoCache;
 import com.example.demo.dto.response.MyInfoResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.exception.AppException;
@@ -19,10 +22,15 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +45,7 @@ public class AdminUserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     RoleRepository roleRepository;
+    RedisService redisService;
 //    JwtAuthenticationFilter jwtAuthenticationFilter;
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -107,43 +116,48 @@ public class AdminUserService {
             throw new RuntimeException("User already exists");
         }
     }
-    public MyInfoResponse getMyInfo(HttpServletRequest request) throws ParseException {
-//        String authHeader = request.getHeader("Authorization");
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            throw new AppException(ErrorCode.UNAUTHENTICATED);
-//        }
-//
-//        String accessToken = authHeader.substring(7);
-//        SignedJWT signedJWT;
-//        try {
-//            // 2. Parse token
-//            signedJWT = SignedJWT.parse(accessToken);
-//        } catch (Exception e) {
-//            throw new AppException(ErrorCode.INVALID_TOKEN);
-//        }
-//        // 3. Verify signature
-//        try {
-//            JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
-//            if (!signedJWT.verify(verifier)) {
-//                throw new AppException(ErrorCode.INVALID_TOKEN);
-//            }
-//        } catch (Exception e) {
-//            throw new AppException(ErrorCode.INVALID_TOKEN);
-//        }
-//        //check expiry
-//        Date expiry = signedJWT.getJWTClaimsSet().getExpirationTime();
-//        if (expiry.before(new Date())) {
-//            throw new AppException(ErrorCode.ACCESS_TOKEN_EXPIRED);
-//        }
-//        String userId = signedJWT.getJWTClaimsSet().getSubject();
-        String userId = (String) request.getAttribute("username");
 
-        log.info("Getting info for userId: {}", userId);
+//    @Cacheable(
+//            value = "my-info",
+//            key = "#userId"
+//    )
+    public MyInfoCache getMyInfoCache(String userId) throws ParseException {
+        String key = CacheKey.myInfo(userId);
 
-        AdminUser adminUser = adminUserRepository.findByUsername(userId)
+        MyInfoCache cache = redisService.get(key,MyInfoCache.class);
+        if (cache != null) {
+            log.info("CACHE HIT my-info {}", userId);
+            return cache;
+        }
+        // Cache miss => query db
+        AdminUser adminUser = adminUserRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        return userMapper.toMyInfoResponse(adminUser);
+        MyInfoCache result = new MyInfoCache(
+                adminUser.getId(),
+                adminUser.getUsername(),
+                adminUser.getEmail(),
+                adminUser.getFullname(),
+                adminUser.getPhone(),
+                adminUser.getCreatedAt()
+        );
+        //set cache
+        redisService.set(key,result, Duration.ofMinutes(10));
+        log.info("CACHE SET my-info {}", userId);
+        return result;
+    }
+
+    public MyInfoResponse getMyInfo(String userId) throws ParseException {
+        MyInfoCache cache = getMyInfoCache(userId);
+
+        return new MyInfoResponse(
+                cache.id(),
+                cache.username(),
+                cache.email(),
+                cache.fullName(),
+                cache.phoneNumber(),
+                cache.createdAt()
+        );
     }
     public Optional<AdminUser> handleGetUserByUsername(String username) {
         return this.adminUserRepository.findByUsername(username);
@@ -193,6 +207,7 @@ public class AdminUserService {
     }
 
     @Transactional
+//    @CacheEvict(value = "my-info", key = "#id")
     public AdminUserDTO updateAdminUser(String id, AdminUserUpdateRequest request) {
         AdminUser adminUser = adminUserRepository.findByIdAndNotDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Admin user không tồn tại"));
@@ -217,6 +232,8 @@ public class AdminUserService {
         }
 
         AdminUser updated = adminUserRepository.save(adminUser);
+        String key = CacheKey.myInfo(id);
+        redisService.delete(key);
         return convertToDTO(updated);
     }
 

@@ -3,6 +3,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.request.*;
 import com.example.demo.dto.response.ApiResponse;
+import com.example.demo.dto.response.MyInfoCache;
 import com.example.demo.dto.response.MyInfoResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.services.AdminUserService;
@@ -14,6 +15,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -41,9 +44,10 @@ public class AdminUserController {
         return "OK";
     }
     @GetMapping("/me")
-    ApiResponse<MyInfoResponse> getMyInfo(HttpServletRequest request) throws ParseException {
+    ApiResponse<MyInfoResponse> getMyInfo(@AuthenticationPrincipal Jwt jwt) throws ParseException {
+        String userId = jwt.getClaimAsString("user_id");
         return ApiResponse.<MyInfoResponse>builder()
-                .result(adminUserService.getMyInfo(request))
+                .result(adminUserService.getMyInfo(userId))
                 .build();
     }
 
